@@ -6,6 +6,14 @@ from scipy.optimize import minimize
 
 
 def _linear_regression_loss_function(W, X, y, C=0):
+    """
+    cost function and its gradient for linear regression
+    :param W: ndarray Coefficients
+    :param X: ndarray Independent variable
+    :param y: ndarray Dependent variable
+    :param C: float parameter for L2 regularization
+    :return: tuple of cost function and gradient
+    """
     e = - (y - X.dot(W))
     grad = np.sum(e[:, np.newaxis] * X, 0)
 
@@ -52,6 +60,17 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
 
 class SGDLinearRegression(_BaseLinearRegression):
     def __init__(self, n_dim, fit_intercept=True, n_iter=1000, eps=1e-5, C=0.01, batch_size=100, lr=0.001):
+        """
+        Linear Regression using Stocastic Gradient Descent(SGD)
+        :param n_dim: int dimension of independent variable
+        :param fit_intercept: boolean
+            if True explicitly fit intercept, if False assume the independent variables include dummy ones
+        :param n_iter: int, maximum iteration
+        :param eps: float, error tolerance under which the iteration will stop
+        :param C: float, L2 regularization parameter
+        :param batch_size: int batch size
+        :param lr: float learning ratio
+        """
         _BaseLinearRegression.__init__(self, n_dim, fit_intercept, n_iter, eps, C)
         self.lr = lr
         self.batch_size = batch_size
@@ -82,11 +101,22 @@ class SGDLinearRegression(_BaseLinearRegression):
 
 class BatchLinearRegression(_BaseLinearRegression):
     def __init__(self, n_dim, fit_intercept=True, n_iter=1000, eps=1e-5, C=0.01, method="CG"):
+        """
+        Linear Regression using Batch Gradient Descent such as Conjugate Gradient (CG) or BFGS
+        :param n_dim: int dimension of independent variable
+        :param fit_intercept: boolean
+            if True explicitly fit intercept, if False assume the independent variables include dummy ones
+        :param n_iter: int, maximum iteration
+        :param eps: float, error tolerance under which the iteration will stop
+        :param C: float, L2 regularization parameter
+        :param method: string method name passes to scipy.optimize.minimize
+        """
         _BaseLinearRegression.__init__(self, n_dim, fit_intercept, n_iter, eps, C)
         self.method = method
 
     def _fit(self, X, y):
-        result = minimize(_linear_regression_loss_function, self.W_, (X, y, self.C), self.method, jac=True, tol=self.eps,
+        result = minimize(_linear_regression_loss_function, self.W_, (X, y, self.C), self.method, jac=True,
+                          tol=self.eps,
                           options={"maxiter": self.n_iter})
         self.W_ = result.x
 
