@@ -1,7 +1,7 @@
 __author__ = 'du'
 
 import numpy as np
-from road_to_deep_learning.naive.linear_regression import SGDLinearRegression, BatchLinearRegression
+from road_to_deep_learning.naive import SGDLinearRegression, BatchLinearRegression
 
 np.random.seed(0)
 W = [2, -1]

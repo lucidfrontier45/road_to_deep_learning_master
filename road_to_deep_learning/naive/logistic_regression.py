@@ -4,63 +4,7 @@ import numpy as np
 from sklearn import base
 from sklearn import preprocessing
 from scipy.optimize import minimize
-from scipy.misc import logsumexp
-from ..utils import sgd
-
-
-def softmax(w):
-    w = np.array(w)
-    maxes = np.max(w, axis=1)
-    maxes = maxes.reshape(maxes.shape[0], 1)
-    e = np.exp(w - maxes)
-    dist = e / np.sum(e, axis=1)[:, np.newaxis]
-
-    return dist
-
-
-def log_softmax(w):
-    w = np.array(w)
-    maxes = np.max(w, axis=1)
-    maxes = maxes.reshape(maxes.shape[0], 1)
-    e = w - maxes
-    return e - logsumexp(e, axis=1)[:, np.newaxis]
-
-
-def cross_entropy_error(W, X, y, C=0):
-    n_dim = X.shape[1]
-    n_classes = W.size / n_dim
-    W = W.reshape(n_classes, n_dim)
-    ln_h = log_softmax(X.dot(W.T))
-    error = -(y * ln_h).sum()
-
-    if C > 0:
-        error += C * W.dot(W.T).sum()
-
-    return error
-
-
-def cross_entropy_error_grad(W, X, y, C=0):
-    """
-    cross-entropy cost function and its gradient for logistic regression
-    :param W: ndarray, shape(K, D) Coefficients
-    :param X: ndarray, shape(N, D) Independent variable
-    :param y: ndarray, shape(N, K) Dependent variable in 1-of-K encoding
-    :param C: float parameter for L2 regularization
-    :return: tuple of cost function and gradient
-    """
-
-    n_dim = X.shape[1]
-    n_classes = W.size / n_dim
-    W = W.reshape(n_classes, n_dim)
-    ln_h = log_softmax(X.dot(W.T))
-    error = -(y * ln_h).sum()
-    grad = (np.exp(ln_h) - y).T.dot(X)
-
-    if C > 0:
-        error += C * W.dot(W.T).sum()
-        grad += 2.0 * C * W
-
-    return error, grad.flatten()
+from ..utils import sgd, softmax, cross_entropy_error, cross_entropy_error_grad
 
 
 class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
@@ -86,6 +30,8 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
         Y = self._preprocessor.fit_transform(y)
 
         self._fit(D, Y)
+
+        print("final error = {0}".format(cross_entropy_error(self.W_, D, Y, self.C)))
 
         return self
 
@@ -124,27 +70,6 @@ class SGDLogisticRegression(_BaseLogisticRegression):
         self.report = report
 
     def _fit(self, X, y):
-        # N = len(y)
-        # error = 1e10
-        # W = self.W_.flatten()
-        # for i in range(self.n_iter):
-        #     if 0 < self.batch_size < N:
-        #         idx = np.random.permutation(self.batch_size)
-        #         XX = X[idx]
-        #         yy = y[idx]
-        #     else:
-        #         XX = X
-        #         yy = y
-        #     _, grad = cross_entropy_error_grad(W, XX, yy, self.C)
-        #     W -= self.lr * grad
-        #     e = cross_entropy_error(W, X, y, self.C)
-        #     if i % 100 == 0:
-        #         print(i, e, error - e, self.tol)
-        #     if error - e < self.tol:
-        #         print(i, e, error - e, self.tol)
-        #         break
-        #     error = e
-
         W, error, converged = sgd(cross_entropy_error, cross_entropy_error_grad, self.W_.flatten(), X, y,
                                   self.C, self.n_iter, self.lr, self.batch_size, self.tol, self.report)
 

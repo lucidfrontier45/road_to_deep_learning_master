@@ -4,45 +4,7 @@ import numpy as np
 from sklearn import base
 from scipy.optimize import minimize
 
-from ..utils import sgd
-
-
-def sum_of_square_error(W, X, y, C=0):
-    """
-    sum of square cost function for linear regression
-    :param W: ndarray Coefficients
-    :param X: ndarray Independent variable
-    :param y: ndarray Dependent variable
-    :param C: float parameter for L2 regularization
-    :return: value of cost function
-    """
-    e = - (y - X.dot(W))
-    error = e.dot(e)
-
-    if C > 0:
-        error += C * W.dot(W)
-
-    return error
-
-
-def sum_of_square_error_grad(W, X, y, C=0):
-    """
-    sum of square cost function and its gradient for linear regression
-    :param W: ndarray Coefficients
-    :param X: ndarray Independent variable
-    :param y: ndarray Dependent variable
-    :param C: float parameter for L2 regularization
-    :return: tuple of cost function and gradient
-    """
-    e = - (y - X.dot(W))
-    error = e.dot(e)
-    grad = np.sum(e[:, np.newaxis] * X, 0)
-
-    if C > 0:
-        error += C * W.dot(W)
-        grad += 2.0 * C * W
-
-    return error, grad
+from ..utils import sgd, sum_of_square_error, sum_of_square_error_grad
 
 
 class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
@@ -64,6 +26,8 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
             D = X
 
         self._fit(D, y)
+
+        print("final error = {0}".format(sum_of_square_error(self.W_, D, y, self.C)))
 
         return self
 
