@@ -20,6 +20,9 @@ def create_cost_func(cost_f, penalty_f, C, fit_intercept):
         W = W.flatten()
         error = cost_f(W, X, y)
         if C > 0:
+            if fit_intercept:
+                n_dim = X.shape[1]
+                W[n_dim - 1::n_dim] = 0
             e = penalty_f(W, C)
             error += e
         return error
@@ -32,6 +35,9 @@ def create_cost_grad_func(cost_grad_f, penalty_grad_f, C, fit_intercept):
         W = W.flatten()
         error, grad = cost_grad_f(W, X, y)
         if C > 0:
+            if fit_intercept:
+                n_dim = X.shape[1]
+                W[n_dim - 1::n_dim] = 0
             e, g = penalty_grad_f(W, C)
             error += e
             grad += g

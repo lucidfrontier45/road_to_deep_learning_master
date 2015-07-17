@@ -100,3 +100,21 @@ class BatchLogisticRegression(_BaseLogisticRegression):
         result = minimize(self._cost_grad_func, self.W_.flatten(), (X, y), self.method, jac=True,
                           tol=self.tol, options={"maxiter": self.n_iter})
         self.W_ = result.x.reshape(self.n_classes, result.x.size / self.n_classes)
+
+
+class LogisticRegression(_BaseLogisticRegression):
+    def __init__(self, n_dim, n_classes, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, optimizer=sgd, method="CG",
+                 batch_size=100, lr=0.001, report=0, momentum=0.9):
+        _BaseLogisticRegression.__init__(self, n_dim, n_classes, fit_intercept, n_iter, tol, C)
+        self.lr = lr
+        self.batch_size = batch_size
+        self.report = report
+        self.momentum = momentum
+        self.method = method
+        self.optimizer = optimizer
+
+    def _fit(self, X, y):
+        W, error, converged = self.optimizer(self._cost_func, self._cost_grad_func, self.W_.flatten(), X, y,
+                                             self.n_iter, tol=self.tol, lr=self.lr, batch_size=self.batch_size,
+                                             report=self.report, momentum=self.momentum, method=self.method)
+        self.W_ = W.reshape(self.n_classes, W.size / self.n_classes)

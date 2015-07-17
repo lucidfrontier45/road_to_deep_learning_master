@@ -1,13 +1,14 @@
 __author__ = 'du'
 
 import numpy as np
+from scipy.optimize import minimize
 
 
 def format_result(i, e, de, tol):
     return "{0:>8d}, {1:.4e}, {2:.4e}, {3:.4e}".format(i, e, de, tol)
 
 
-def gd(objective_f, grad_f, W_init, X, y, n_iter=1000, lr=0.01, tol=1e-5, report=0):
+def gd(objective_f, grad_f, W_init, X, y, n_iter=1000, lr=0.01, tol=1e-5, report=0, **params):
     error = 1e10
     W = W_init.copy()
     converged = False
@@ -29,7 +30,7 @@ def gd(objective_f, grad_f, W_init, X, y, n_iter=1000, lr=0.01, tol=1e-5, report
 
 
 def sgd(objective_f, grad_f, W_init, X, y, n_iter=1000, lr=0.01, batch_size=100, tol=1e-5,
-        report=0, momentum=0.5):
+        report=0, momentum=0.5, **params):
     N = len(y)
     assert N > batch_size
     assert batch_size > 0
@@ -69,3 +70,8 @@ def sgd(objective_f, grad_f, W_init, X, y, n_iter=1000, lr=0.01, batch_size=100,
             break
 
     return W, error, converged
+
+
+def scipy_minimize(objective_f, grad_f, W_init, X, y, n_iter=1000, tol=1e-5, method="CG", **params):
+    result = minimize(grad_f, W_init, (X, y), method, jac=True, tol=tol, options={"maxiter": n_iter})
+    return result.x, result.fun, result.success

@@ -4,8 +4,8 @@ import numpy as np
 from sklearn import base
 from scipy.optimize import minimize
 
-from ..utils import sgd, sum_of_square_error, sum_of_square_error_grad, l2_penalty, l2_penalty_grad, create_cost_func, \
-    create_cost_grad_func
+from ..utils import sum_of_square_error, sum_of_square_error_grad, l2_penalty, l2_penalty_grad, create_cost_func, \
+    create_cost_grad_func, sgd
 
 
 class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
@@ -96,16 +96,19 @@ class BatchLinearRegression(_BaseLinearRegression):
         self.W_ = result.x
 
 
-if __name__ == "__main__":
-    np.random.seed(0)
-    W = [2, -1]
-    X = np.random.randn(10000, 2)
-    y = X.dot(W) + 1 + np.random.randn(len(X))
+class LinearRegression(_BaseLinearRegression):
+    def __init__(self, n_dim, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, optimizer=sgd, batch_size=100,
+                 lr=0.001, report=0, momentum=0.9, method="CG"):
+        _BaseLinearRegression.__init__(self, n_dim, fit_intercept, n_iter, tol, C)
+        self.lr = lr
+        self.batch_size = batch_size
+        self.report = report
+        self.momentum = momentum
+        self.method = method
+        self.optimizer = optimizer
 
-    model1 = SGDLinearRegression(X.shape[1], tol=1e-7, batch_size=100, n_iter=1000000).fit(X, y)
-    print(model1.W_)
-    print(model1.score(X, y))
-
-    model2 = BatchLinearRegression(X.shape[1], tol=1e-7, n_iter=1000000, method="L-BFGS-B").fit(X, y)
-    print(model2.W_)
-    print(model2.score(X, y))
+    def _fit(self, X, y):
+        W, error, converged = self.optimizer(self._cost_func, self._cost_grad_func, self.W_.flatten(), X, y,
+                                             self.n_iter, tol=self.tol, lr=self.lr, batch_size=self.batch_size,
+                                             report=self.report, momentum=self.momentum, method=self.method)
+        self.W_ = W.copy()
