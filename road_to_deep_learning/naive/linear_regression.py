@@ -80,7 +80,7 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
 
 
 class SGDLinearRegression(_BaseLinearRegression):
-    def __init__(self, n_dim, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, batch_size=100, lr=0.001):
+    def __init__(self, n_dim, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, batch_size=100, lr=0.001, report=0):
         """
         Linear Regression using Stocastic Gradient Descent(SGD)
         :param n_dim: int dimension of independent variable
@@ -95,10 +95,11 @@ class SGDLinearRegression(_BaseLinearRegression):
         _BaseLinearRegression.__init__(self, n_dim, fit_intercept, n_iter, tol, C)
         self.lr = lr
         self.batch_size = batch_size
+        self.report = report
 
     def _fit(self, X, y):
         W, error, converged = sgd(sum_of_square_error, sum_of_square_error_grad, self.W_.copy(), X, y,
-                                  self.C, self.n_iter, self.lr, self.batch_size, self.tol)
+                                  self.C, self.n_iter, self.lr, self.batch_size, self.tol, self.report)
 
         self.W_ = W.copy()
 

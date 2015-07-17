@@ -12,8 +12,8 @@ y = iris.target
 n_dim = X.shape[1]
 n_classes = len(set(y))
 
-model1 = SGDLogisticRegression(n_dim, n_classes, batch_size=10,
-                               n_iter=100000, report=1000, C=0.01, lr=0.0001, tol=1e-5).fit(X, y)
+model1 = SGDLogisticRegression(n_dim, n_classes, batch_size=30,
+                               n_iter=100000, report=1000, C=0.01, lr=0.0001).fit(X, y)
 print(model1.W_)
 print(model1.score(X, y))
 

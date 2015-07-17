@@ -3,6 +3,10 @@ __author__ = 'du'
 import numpy as np
 
 
+def format_result(i, e, de, tol):
+    return "{0:>8d}, {1:.4e}, {2:.4e}, {3:.4e}".format(i, e, de, tol)
+
+
 def gd(objective_f, grad_f, W_init, X, y, C=0.01, n_iter=1000, lr=0.01, tol=1e-5, report=0):
     error = 1e10
     W = W_init.copy()
@@ -12,9 +16,10 @@ def gd(objective_f, grad_f, W_init, X, y, C=0.01, n_iter=1000, lr=0.01, tol=1e-5
         W -= lr * grad
         e = objective_f(W, X, y, C)
         if report > 0 and i % report == 0:
-            print(i, e, error - e, tol)
+            print(format_result(i, e, error - e, tol))
         if tol > 0 and error - e < tol:
-            print(i, e, error - e, tol)
+            print(format_result(i, e, error - e, tol))
+            print("converged")
             converged = True
             break
         error = e
@@ -45,9 +50,10 @@ def sgd(objective_f, grad_f, W_init, X, y, C=0.01, n_iter=1000, lr=0.01, batch_s
 
         e = objective_f(W, X, y, C)
         if report > 0 and i % report == 0:
-            print(i, e, error - e, tol)
+            print(format_result(i, e, error - e, tol))
         if tol > 0 and error - e < tol:
-            print(i, e, error - e, tol)
+            print(format_result(i, e, error - e, tol))
+            print("converged")
             converged = True
             break
         error = e
