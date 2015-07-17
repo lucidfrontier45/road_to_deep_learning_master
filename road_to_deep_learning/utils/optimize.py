@@ -13,7 +13,7 @@ def gd(objective_f, grad_f, W_init, X, y, C=0.01, n_iter=1000, lr=0.01, tol=1e-5
     converged = False
     for i in range(n_iter):
         _, grad = grad_f(W, X, y, C)
-        W -= lr * grad
+        W -= lr * grad / len(y)
         e = objective_f(W, X, y, C)
         if report > 0 and i % report == 0:
             print(format_result(i, e, error - e, tol))
@@ -46,7 +46,7 @@ def sgd(objective_f, grad_f, W_init, X, y, C=0.01, n_iter=1000, lr=0.01, batch_s
             start = b * batch_size
             stop = start + batch_size
             _, grad = grad_f(W, XX[start:stop], yy[start:stop], C)
-            W -= lr * grad
+            W -= lr * grad / batch_size
 
         e = objective_f(W, X, y, C)
         if report > 0 and i % report == 0:
