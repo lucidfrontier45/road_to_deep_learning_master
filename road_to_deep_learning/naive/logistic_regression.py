@@ -4,7 +4,8 @@ import numpy as np
 from sklearn import base
 from sklearn import preprocessing
 from scipy.optimize import minimize
-from ..utils import sgd, softmax, cross_entropy_error, cross_entropy_error_grad
+from ..utils import sgd, softmax, cross_entropy_error, cross_entropy_error_grad, l2_penalty, l2_penalty_grad, \
+    create_cost_func, create_cost_grad_func
 
 
 class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
@@ -20,6 +21,9 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
         self.tol = tol
         self.C = C
         self._preprocessor = preprocessing.LabelBinarizer()
+        self._cost_func = create_cost_func(cross_entropy_error, l2_penalty, self.C, self.fit_intercept)
+        self._cost_grad_func = create_cost_grad_func(cross_entropy_error_grad, l2_penalty_grad, self.C,
+                                                     self.fit_intercept)
 
     def fit(self, X, y):
         if self.fit_intercept:
@@ -31,7 +35,7 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
 
         self._fit(D, Y)
 
-        print("final error = {0}".format(cross_entropy_error(self.W_, D, Y, self.C)))
+        print("final error = {0}".format(self._cost_func(self.W_, D, Y)))
 
         return self
 
@@ -51,7 +55,7 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
 
 class SGDLogisticRegression(_BaseLogisticRegression):
     def __init__(self, n_dim, n_classes, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, batch_size=100, lr=0.001,
-                 report=0):
+                 report=0, momentum=0.9):
         """
         Logistic Regression using Stocastic Gradient Descent(SGD)
         :param n_dim: int dimension of independent variable
@@ -68,10 +72,11 @@ class SGDLogisticRegression(_BaseLogisticRegression):
         self.lr = lr
         self.batch_size = batch_size
         self.report = report
+        self.momentum = momentum
 
     def _fit(self, X, y):
-        W, error, converged = sgd(cross_entropy_error, cross_entropy_error_grad, self.W_.flatten(), X, y,
-                                  self.C, self.n_iter, self.lr, self.batch_size, self.tol, self.report)
+        W, error, converged = sgd(self._cost_func, self._cost_grad_func, self.W_.flatten(), X, y, self.n_iter, self.lr,
+                                  self.batch_size, self.tol, self.report, self.momentum)
 
         self.W_ = W.reshape(self.n_classes, W.size / self.n_classes)
 
@@ -92,6 +97,6 @@ class BatchLogisticRegression(_BaseLogisticRegression):
         self.method = method
 
     def _fit(self, X, y):
-        result = minimize(cross_entropy_error_grad, self.W_.flatten(), (X, y, self.C), self.method, jac=True,
+        result = minimize(self._cost_grad_func, self.W_.flatten(), (X, y), self.method, jac=True,
                           tol=self.tol, options={"maxiter": self.n_iter})
         self.W_ = result.x.reshape(self.n_classes, result.x.size / self.n_classes)

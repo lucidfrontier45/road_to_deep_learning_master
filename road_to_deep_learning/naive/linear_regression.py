@@ -4,7 +4,8 @@ import numpy as np
 from sklearn import base
 from scipy.optimize import minimize
 
-from ..utils import sgd, sum_of_square_error, sum_of_square_error_grad
+from ..utils import sgd, sum_of_square_error, sum_of_square_error_grad, l2_penalty, l2_penalty_grad, create_cost_func, \
+    create_cost_grad_func
 
 
 class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
@@ -18,6 +19,9 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
         self.n_iter = n_iter
         self.tol = tol
         self.C = C
+        self._cost_func = create_cost_func(sum_of_square_error, l2_penalty, self.C, self.fit_intercept)
+        self._cost_grad_func = create_cost_grad_func(sum_of_square_error_grad, l2_penalty_grad, self.C,
+                                                     self.fit_intercept)
 
     def fit(self, X, y):
         if self.fit_intercept:
@@ -27,7 +31,7 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
 
         self._fit(D, y)
 
-        print("final error = {0}".format(sum_of_square_error(self.W_, D, y, self.C)))
+        print("final error = {0}".format(self._cost_func(self.W_, D, y)))
 
         return self
 
@@ -44,7 +48,8 @@ class _BaseLinearRegression(base.BaseEstimator, base.RegressorMixin):
 
 
 class SGDLinearRegression(_BaseLinearRegression):
-    def __init__(self, n_dim, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, batch_size=100, lr=0.001, report=0):
+    def __init__(self, n_dim, fit_intercept=True, n_iter=1000, tol=1e-5, C=0.01, batch_size=100, lr=0.001, report=0,
+                 momentum=0.9):
         """
         Linear Regression using Stocastic Gradient Descent(SGD)
         :param n_dim: int dimension of independent variable
@@ -60,10 +65,11 @@ class SGDLinearRegression(_BaseLinearRegression):
         self.lr = lr
         self.batch_size = batch_size
         self.report = report
+        self.momentum = momentum
 
     def _fit(self, X, y):
-        W, error, converged = sgd(sum_of_square_error, sum_of_square_error_grad, self.W_.copy(), X, y,
-                                  self.C, self.n_iter, self.lr, self.batch_size, self.tol, self.report)
+        W, error, converged = sgd(self._cost_func, self._cost_grad_func, self.W_.copy(), X, y, self.n_iter, self.lr,
+                                  self.batch_size, self.tol, self.report, self.momentum)
 
         self.W_ = W.copy()
 
@@ -84,7 +90,7 @@ class BatchLinearRegression(_BaseLinearRegression):
         self.method = method
 
     def _fit(self, X, y):
-        result = minimize(sum_of_square_error_grad, self.W_, (X, y, self.C), self.method, jac=True,
+        result = minimize(self._cost_grad_func, self.W_, (X, y), self.method, jac=True,
                           tol=self.tol,
                           options={"maxiter": self.n_iter})
         self.W_ = result.x
