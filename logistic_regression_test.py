@@ -13,8 +13,8 @@ y = iris.target
 n_dim = X.shape[1]
 n_classes = len(set(y))
 
-model = LogisticRegression(n_dim, n_classes, optimizer=optimize.sgd, batch_size=100, tol=1e-7, lr=0.001,
-                               n_iter=100000, report=1000, C=1.0).fit(X, y)
+model = LogisticRegression(n_dim, n_classes, optimizer=optimize.scipy_minimize, batch_size=100, tol=1e-7, lr=0.001,
+                               n_iter=100000, report=1000, C=1.0, method="L-BFGS-B").fit(X, y)
 print(model.W_)
 print(model.score(X, y))
 

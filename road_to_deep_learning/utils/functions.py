@@ -21,8 +21,8 @@ def create_cost_func(cost_f, penalty_f, C, fit_intercept):
         error = cost_f(W, X, y)
         if C > 0:
             if fit_intercept:
-                n_dim = X.shape[1]
-                W[n_dim - 1::n_dim] = 0
+                input_dim = X.shape[1]
+                W[input_dim - 1::input_dim] = 0
             e = penalty_f(W, C)
             error += e
         return error
@@ -36,8 +36,8 @@ def create_cost_grad_func(cost_grad_f, penalty_grad_f, C, fit_intercept):
         error, grad = cost_grad_f(W, X, y)
         if C > 0:
             if fit_intercept:
-                n_dim = X.shape[1]
-                W[n_dim - 1::n_dim] = 0
+                input_dim = X.shape[1]
+                W[input_dim - 1::input_dim] = 0
             e, g = penalty_grad_f(W, C)
             error += e
             grad += g
@@ -54,8 +54,11 @@ def sum_of_square_error(W, X, y):
     :param y: ndarray Dependent variable
     :return: value of cost function
     """
-    e = - (y - X.dot(W))
-    error = e.dot(e)
+    input_dim = X.shape[1]
+    output_dim = W.size / input_dim
+    W = W.reshape(output_dim, input_dim)
+    e = - (y - X.dot(W.T))
+    error = np.sum(e * e)
 
     return error
 
@@ -68,11 +71,14 @@ def sum_of_square_error_grad(W, X, y):
     :param y: ndarray Dependent variable
     :return: tuple of cost function and gradient
     """
-    e = - (y - X.dot(W))
-    error = e.dot(e)
-    grad = np.sum(e[:, np.newaxis] * X, 0)
+    input_dim = X.shape[1]
+    output_dim = W.size / input_dim
+    W = W.reshape(output_dim, input_dim)
+    e = - (y - X.dot(W.T))
+    error = np.sum(e * e)
+    grad = e.T.dot(X)
 
-    return error, grad
+    return error, grad.flatten()
 
 
 def softmax(w):
@@ -94,9 +100,9 @@ def log_softmax(w):
 
 
 def cross_entropy_error(W, X, y):
-    n_dim = X.shape[1]
-    n_classes = W.size / n_dim
-    W = W.reshape(n_classes, n_dim)
+    input_dim = X.shape[1]
+    output_dim = W.size / input_dim
+    W = W.reshape(output_dim, input_dim)
     ln_h = log_softmax(X.dot(W.T))
     error = -(y * ln_h).sum()
 
@@ -113,9 +119,9 @@ def cross_entropy_error_grad(W, X, y):
     :return: tuple of cost function and gradient
     """
 
-    n_dim = X.shape[1]
-    n_classes = W.size / n_dim
-    W = W.reshape(n_classes, n_dim)
+    input_dim = X.shape[1]
+    output_dim = W.size / input_dim
+    W = W.reshape(output_dim, input_dim)
     ln_h = log_softmax(X.dot(W.T))
     error = -(y * ln_h).sum()
     grad = (np.exp(ln_h) - y).T.dot(X)
