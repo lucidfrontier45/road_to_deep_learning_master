@@ -58,7 +58,7 @@ def sum_of_square_error(W, X, y):
     output_dim = W.size / input_dim
     W = W.reshape(output_dim, input_dim)
     e = - (y - X.dot(W.T))
-    error = np.sum(e * e)
+    error = np.sum(e * e) * 0.5
 
     return error
 
@@ -75,7 +75,7 @@ def sum_of_square_error_grad(W, X, y):
     output_dim = W.size / input_dim
     W = W.reshape(output_dim, input_dim)
     e = - (y - X.dot(W.T))
-    error = np.sum(e * e)
+    error = np.sum(e * e) * 0.5
     grad = e.T.dot(X)
 
     return error, grad.flatten()
