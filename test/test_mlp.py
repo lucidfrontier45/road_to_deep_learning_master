@@ -6,10 +6,10 @@ import numpy as np
 from road_to_deep_learning.naive import mlp
 from road_to_deep_learning.utils import functions
 
-model = mlp.MLPRegression(3, 2, 2, batch_size=100, tol=1e-7, lr=0.001,
-                          n_iter=100000, report=1000, method="L-BFGS-B",
-                          activation=functions.Identity(),
-                          lambda_input=0.0, lambda_hidden=0.0)
+model = mlp.MLPRegressor(3, 2, 2, batch_size=100, tol=1e-7, lr=0.001,
+                         n_iter=100000, report=1000, method="L-BFGS-B",
+                         activation=functions.Identity(),
+                         lambda_input=0.0, lambda_hidden=0.0)
 w_input = np.array([[1, 1, 1], [1, -1, 0]])
 w_hidden = np.array([[1, 1], [1, -1]])
 
@@ -49,11 +49,3 @@ class MLPCase(TestCase):
         ok_(np.allclose(g_hidden, g_hidden_true))
         g_input_true = np.array([[12, 8, 4], [-6, -4, -2]])
         ok_(np.allclose(g_input, g_input_true))
-
-    def testDelta(self):
-        x = np.array([[3, 2]])
-        y = np.array([[6, 2]])
-        a, z, y_hat = model.forward(x)
-        delta_hidden, delta_input = mlp._compute_delta(model.w_hidden, y, model.activation.grad, a, y_hat)
-        ok_(np.allclose(delta_hidden, np.array([[1, 3]])))
-        ok_(np.allclose(delta_input, np.array([[4, -2]])))
