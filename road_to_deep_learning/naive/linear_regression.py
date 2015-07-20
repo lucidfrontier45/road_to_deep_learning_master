@@ -95,7 +95,7 @@ class BatchLinearRegression(_BaseLinearRegression):
         result = minimize(self._cost_grad_func, self.W_.flatten(), (X, y), self.method, jac=True,
                           tol=self.tol,
                           options={"maxiter": self.n_iter})
-        return W
+        return result.x
 
 
 class LinearRegression(_BaseLinearRegression):

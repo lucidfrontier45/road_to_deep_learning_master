@@ -1,6 +1,7 @@
 __author__ = 'du'
 
 import numpy as np
+from scipy.special import expit
 from scipy.misc import logsumexp
 from functools import partial
 
@@ -62,6 +63,18 @@ def sum_of_square_error(W, X, y):
 
     return error
 
+def sum_of_square_error2(y, z):
+    """
+    sum of square cost function for linear regression
+    :param y: ndarray Dependent variable
+    :param z: ndarray output of hidden unit
+    :return: value of cost function
+    """
+    e = - (y - z)
+    error = np.sum(e * e) * 0.5
+
+    return error
+
 
 def sum_of_square_error_grad(W, X, y):
     """
@@ -74,7 +87,8 @@ def sum_of_square_error_grad(W, X, y):
     input_dim = X.shape[1]
     output_dim = W.size / input_dim
     W = W.reshape(output_dim, input_dim)
-    e = - (y - X.dot(W.T))
+    y_hat = (X.dot(W.T))
+    e = y_hat - y
     error = np.sum(e * e) * 0.5
     grad = e.T.dot(X)
 
@@ -108,6 +122,11 @@ def cross_entropy_error(W, X, y):
 
     return error
 
+def cross_entropy_error2(y, ln_y_hat):
+    error = -(y * ln_y_hat).sum()
+
+    return error
+
 
 def cross_entropy_error_grad(W, X, y):
     """
@@ -127,3 +146,25 @@ def cross_entropy_error_grad(W, X, y):
     grad = (np.exp(ln_h) - y).T.dot(X)
 
     return error, grad.flatten()
+
+class DifferentiableFunction(object):
+    def __call__(self, x):
+        raise NotImplementedError
+
+    def grad(self, x):
+        raise NotImplementedError
+
+class Identity(DifferentiableFunction):
+    def __call__(self, x):
+        return x
+
+    def grad(self, x):
+        return 1.0
+
+class Sigmoid(DifferentiableFunction):
+    def __call__(self, x):
+        return expit(x)
+
+    def grad(self, x):
+        y = self(x)
+        return y * (1 - y)
