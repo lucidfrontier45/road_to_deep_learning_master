@@ -173,13 +173,6 @@ class MLP(base.BaseEstimator):
         self.w_hidden = w_hidden
         return self
 
-    def predict(self, X):
-        if self.fit_intercept:
-            D = np.column_stack((X, np.ones(X.shape[0])))
-        else:
-            D = X
-        a, z, y_hat = self._forward(D)
-        return y_hat
 
 class MLPRegressor(MLP, base.RegressorMixin):
     def __init__(self, input_dim, hidden_dim, output_dim, **params):
@@ -188,20 +181,55 @@ class MLPRegressor(MLP, base.RegressorMixin):
     def fit(self, X, y):
         return self._fit(X, y)
 
+    def predict(self, X):
+        a, z, y_hat = self.forward(X)
+        return y_hat
+
+
 class MLPClassifier(MLP, base.ClassifierMixin):
     def __init__(self, input_dim, hidden_dim, output_dim, **params):
-        MLP.__init__(self, input_dim, hidden_dim, output_dim, "regression", **params)
+        MLP.__init__(self, input_dim, hidden_dim, output_dim, "classification", **params)
 
     def fit(self, X, y):
         y = preprocessing.LabelBinarizer().fit_transform(y)
         return self._fit(X, y)
 
     def predict_proba(self, X):
-        y_hat = MLP.predict(self, X)
+        a, z, y_hat = self.forward(X)
         p = np.exp(functions.log_softmax(y_hat))
         return p
 
     def predict(self, X):
-        y_hat = MLP.predict(self, X)
+        a, z, y_hat = self.forward(X)
         ln_h = functions.log_softmax(y_hat)
         return ln_h.argmax(1)
+
+
+class MLPTransformer(MLP, base.TransformerMixin, base.RegressorMixin):
+    def __init__(self, input_dim, hidden_dim, **params):
+        MLP.__init__(self, input_dim, hidden_dim, input_dim, "regression", fit_intercept=False, **params)
+
+    def fit(self, X, y=None):
+        return self._fit(X, X)
+
+    def transform(self, X):
+        a, z, y_hat = self.forward(X)
+        return z
+
+    def predict(self, X):
+        a, z, y_hat = self.forward(X)
+        return y_hat
+
+
+class AutoEncoder(MLPTransformer):
+    pass
+
+
+class DenoisingAutoEncoder(MLPTransformer):
+    def __init__(self, input_dim, hidden_dim, noise_ratio=0.1, **params):
+        MLP.__init__(self, input_dim, hidden_dim, input_dim, "regression", fit_intercept=False, **params)
+        self.noise_ratio = noise_ratio
+
+    def fit(self, X, y=None):
+        noisy_X = X + np.random.randn(*X.shape) * X.std(0)[np.newaxis, :] * self.noise_ratio
+        return self._fit(noisy_X, X)
