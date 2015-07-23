@@ -6,33 +6,46 @@ from theano import tensor as T, function as F, grad as G
 from sklearn import base, preprocessing
 
 from ..utils import format_result, log_softmax
-from .functions import sigmoid, tanh, identity, relu
+from .functions import activation_functions
 
 floatX = theano.config.floatX
 
 
 class MLP(base.BaseEstimator):
-    def __init__(self, input_dim, hidden_dim, output_dim, activation=relu, lr=0.01, n_iter=100, tol=1e-5, report=100,
+    def __init__(self, input_dim, hidden_dim, output_dim, activation="relu", lr=0.01, n_iter=100, tol=1e-5, report=100,
                  C_hidden=1.0, C_out=1.0, **params):
+
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.activation = activation
+        self.lr = lr
+        self.n_iter = n_iter
+        self.tol = tol
+        self.report = report
+        self.C_hidden = C_hidden
+        self.C_out = C_out
+
         self.Wh = theano.shared(np.random.randn(hidden_dim, input_dim), name="Wh")
         self.bh = theano.shared(np.random.randn(hidden_dim).astype(floatX), name="bh")
         self.Wo = theano.shared(np.random.randn(output_dim, hidden_dim), name="Wo")
         self.bo = theano.shared(np.random.randn(output_dim).astype(floatX), name="bo")
-        self.activation = activation
+        self.activation_function = activation_functions[activation]
         self.lr_symb = theano.shared(lr, name="lr")
         self.Ch = theano.shared(C_hidden, name="Ch")
         self.Co = theano.shared(C_out, name="Co")
-        self.n_iter = n_iter
-        self.tol = tol
-        self.report = report
-        self._forward = self._make_forward_func()
+
+        # self._forward = self._make_forward_func()
 
     def _make_forward_func(self):
         x_symb = T.dmatrix("X")
         ah = T.dot(x_symb, self.Wh.T) + self.bh
-        zh = self.activation(ah)
+        zh = self.activation_function(ah)
         ao = T.dot(zh, self.Wo.T) + self.bo
         return F([x_symb], ao)
+
+    def _forward(self, X):
+        return self._make_forward_func()(X)
 
     def error(self, y, z):
         raise NotImplementedError
@@ -49,7 +62,7 @@ class MLP(base.BaseEstimator):
         x_symb = theano.shared(X, name="X")
         y_symb = theano.shared(y, name="y")
         ah = T.dot(x_symb, self.Wh.T) + self.bh
-        zh = self.activation(ah)
+        zh = self.activation_function(ah)
         ao = T.dot(zh, self.Wo.T) + self.bo
         error = self.error(y_symb, ao) + self.Co * (self.Wo ** 2).sum() + self.Ch * (self.Wh ** 2).sum()
         grad_Wh, grad_bh, grad_Wo, grad_bo = self.grad(error)
@@ -65,11 +78,11 @@ class MLP(base.BaseEstimator):
         for epoch in range(self.n_iter):
             e = float(f()) * scale_factor
             de = e_old - e
-            if epoch % self.report == 0:
+            if self.report > 0 and epoch % self.report == 0:
                 print(format_result(epoch, e, de, self.tol))
             if de < self.tol:
-                print(format_result(epoch, e, de, self.tol))
-                print("break")
+                if self.report > 0:
+                    print(format_result(epoch, e, de, self.tol))
                 break
             e_old = e
         return self
@@ -114,7 +127,7 @@ class MLPTransformer(MLP, base.TransformerMixin):
     def _make_forward_func(self):
         x_symb = T.dmatrix("X")
         ah = T.dot(x_symb, self.Wh.T) + self.bh
-        zh = self.activation(ah)
+        zh = self.activation_function(ah)
         return F([x_symb], zh)
 
     def error(self, y, z):

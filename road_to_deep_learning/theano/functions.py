@@ -4,5 +4,16 @@ import theano.tensor as T
 
 sigmoid = T.nnet.sigmoid
 tanh = T.tanh
-identity = lambda x: x
-relu = lambda x: T.maximum(0, x)
+
+def identity(x):
+    return x
+
+def relu(x):
+    return T.maximum(0, x)
+
+activation_functions = {
+    "sigmoid": sigmoid,
+    "tanh": tanh,
+    "identity": identity,
+    "relu": relu
+}

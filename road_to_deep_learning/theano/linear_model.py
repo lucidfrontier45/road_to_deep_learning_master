@@ -16,13 +16,18 @@ def identity(a):
 
 class LinearModel(base.BaseEstimator):
     def __init__(self, input_dim, output_dim, lr=0.01, n_iter=100, tol=1e-5, report=100, C=1.0, **params):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.lr = lr
+        self.n_iter = n_iter
+        self.tol = tol
+        self.report = report
+        self.C = C
+
         self.W_symb = theano.shared(np.random.randn(output_dim, input_dim), name="W")
         self.b_symb = theano.shared(np.random.randn(output_dim).astype(floatX), name="b")
         self.lr_symb = theano.shared(lr, name="lr")
         self.C_symb = theano.shared(C, name="C")
-        self.n_iter = n_iter
-        self.tol = tol
-        self.report = report
 
     def error(self, y, z):
         raise NotImplementedError
@@ -51,10 +56,11 @@ class LinearModel(base.BaseEstimator):
         for epoch in range(self.n_iter):
             e = float(f()) * scale_factor
             de = e_old - e
-            if epoch % self.report == 0:
+            if self.report > 0 and epoch % self.report == 0:
                 print(format_result(epoch, e, de, self.tol))
             if de < self.tol:
-                print(format_result(epoch, e, de, self.tol))
+                if self.report > 0:
+                    print(format_result(epoch, e, de, self.tol))
                 break
             e_old = e
         return self
