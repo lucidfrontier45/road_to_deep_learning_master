@@ -61,7 +61,7 @@ class MLP(base.BaseEstimator):
     def fit(self, X, y):
         f = self.compile(X, y)
         scale_factor = 1.0 / len(y)
-        e_old = 1e10
+        e_old = float(f()) * scale_factor
         for epoch in range(self.n_iter):
             e = float(f()) * scale_factor
             de = e_old - e
@@ -129,6 +129,3 @@ class MLPTransformer(MLP, base.TransformerMixin):
 
     def transform(self, X):
         return self._forward(X)
-
-class AutoEncoder(MLPTransformer):
-    pass

@@ -68,16 +68,6 @@ class LinearModel(base.BaseEstimator):
         W, b = self.get_variables()
         return np.dot(X, W.T) + b
 
-    def test(self, X, y):
-        N = len(y)
-        x_symb = theano.shared(X, name="X")
-        y_symb = theano.shared(y, name="y")
-        # z = T.dot(x_symb, self.W_symb.T) + self.b_symb
-        # error = self.error(y_symb, z)
-        # grad_W, grad_b = self.grad(error)
-        f = F([], self.W_symb)
-        print(f().shape)
-
 
 class LinearRegression(LinearModel, base.RegressorMixin):
     def error(self, y, z):

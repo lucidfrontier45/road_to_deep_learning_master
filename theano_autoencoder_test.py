@@ -12,7 +12,7 @@ y = iris.target
 n_dim = X.shape[1]
 n_classes = len(set(y))
 
-ae = AutoEncoder(n_dim, 5, tol=1e-6, lr=0.001, n_iter=100000, report=1000).fit(X)
+ae = AutoEncoder(n_dim, 2, tol=1e-6, lr=0.001, n_iter=100000, report=1000).fit(X)
 z = ae.transform(X)
 
 print(z)
