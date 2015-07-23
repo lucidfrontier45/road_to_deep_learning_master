@@ -98,7 +98,7 @@ class MLPClassifier(MLP, base.ClassifierMixin):
         return T.nnet.categorical_crossentropy(y_hat, y).sum()
 
     def fit(self, X, y):
-        y = preprocessing.LabelBinarizer().fit_transform(y)
+        y = preprocessing.MultiLabelBinarizer().fit_transform(np.atleast_2d(y).T)
         return MLP.fit(self, X, y)
 
     def predict(self, X):

@@ -2,7 +2,7 @@ __author__ = 'du'
 
 import numpy as np
 from sklearn import base
-from sklearn import preprocessing
+from sklearn.preprocessing import MultiLabelBinarizer
 from scipy.optimize import minimize
 from ..utils import sgd, softmax, cross_entropy_error, cross_entropy_error_grad, l2_penalty, l2_penalty_grad, \
     create_cost_func, create_cost_grad_func
@@ -20,7 +20,7 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
         self.n_iter = n_iter
         self.tol = tol
         self.C = C
-        self._preprocessor = preprocessing.LabelBinarizer()
+        self._preprocessor = MultiLabelBinarizer()
         self._cost_func = create_cost_func(cross_entropy_error, l2_penalty, self.C, self.fit_intercept)
         self._cost_grad_func = create_cost_grad_func(cross_entropy_error_grad, l2_penalty_grad, self.C,
                                                      self.fit_intercept)
@@ -31,7 +31,7 @@ class _BaseLogisticRegression(base.BaseEstimator, base.ClassifierMixin):
         else:
             D = X
 
-        Y = self._preprocessor.fit_transform(y)
+        Y = self._preprocessor.fit_transform(np.atleast_2d(y).T)
 
         self._fit(D, Y)
 

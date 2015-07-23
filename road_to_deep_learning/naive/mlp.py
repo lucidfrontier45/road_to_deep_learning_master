@@ -191,7 +191,7 @@ class MLPClassifier(MLP, base.ClassifierMixin):
         MLP.__init__(self, input_dim, hidden_dim, output_dim, "classification", **params)
 
     def fit(self, X, y):
-        y = preprocessing.LabelBinarizer().fit_transform(y)
+        y = preprocessing.MultiLabelBinarizer().fit_transform(np.atleast_2d(y).T)
         return self._fit(X, y)
 
     def predict_proba(self, X):
