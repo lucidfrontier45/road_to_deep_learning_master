@@ -15,10 +15,11 @@ def identity(a):
 
 
 class LinearModel(base.BaseEstimator):
-    def __init__(self, input_dim, output_dim, lr=0.01, n_iter=100, tol=1e-5, report=100, **params):
+    def __init__(self, input_dim, output_dim, lr=0.01, n_iter=100, tol=1e-5, report=100, C=1.0, **params):
         self.W_symb = theano.shared(np.random.randn(output_dim, input_dim), name="W")
         self.b_symb = theano.shared(np.random.randn(output_dim).astype(floatX), name="b")
-        self.lr_symb = theano.shared(lr)
+        self.lr_symb = theano.shared(lr, name="lr")
+        self.C_symb = theano.shared(C, name="C")
         self.n_iter = n_iter
         self.tol = tol
         self.report = report
@@ -36,7 +37,7 @@ class LinearModel(base.BaseEstimator):
         x_symb = theano.shared(X, name="X")
         y_symb = theano.shared(y, name="y")
         z = T.dot(x_symb, self.W_symb.T) + self.b_symb
-        error = self.error(y_symb, z)
+        error = self.error(y_symb, z) + self.C_symb * (self.W_symb ** 2).sum()
         grad_W, grad_b = self.grad(error)
         lr = self.lr_symb / len(y)
         updates = [(self.W_symb, self.W_symb - grad_W * lr),
